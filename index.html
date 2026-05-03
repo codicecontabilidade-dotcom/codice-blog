@@ -174,6 +174,14 @@ footer{background:#3B413C;color:#E1E0DC;}
 @keyframes fadein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 .masthead,.hero-article,.calc-strip,.spotlight,.lead-section{animation:fadein .5s ease both;}
 </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-F3WQ90ZGY3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-F3WQ90ZGY3');
+</script>
 </head>
 <body><div class="topbar">
   <span>Códice Blog — Inteligência para Empresários</span>
@@ -293,10 +301,12 @@ footer{background:#3B413C;color:#E1E0DC;}
       <div class="lead-check"><div class="lc-mark"><svg width="9" height="9" viewBox="0 0 10 10"><path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/></svg></div>Impactos da Reforma Tributária no seu regime</div>
       <div class="lead-check"><div class="lc-mark"><svg width="9" height="9" viewBox="0 0 10 10"><path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/></svg></div>Guia de documentação de Depto. Pessoal</div>
     </div>
-    <div class="lead-form">
-      <input class="lead-email" id="lead-email" type="email" placeholder="Seu melhor e-mail…">
-      <button class="lead-submit" onclick="submitLead(this)">Ver Checklist</button>
-    </div>
+    <form name="checklist-lead" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="lead-form" onsubmit="handleLead(event, this)">
+      <input type="hidden" name="form-name" value="checklist-lead">
+      <input type="hidden" name="bot-field" style="display:none">
+      <input class="lead-email" id="lead-email" type="email" name="email" placeholder="Seu melhor e-mail…" required>
+      <button type="submit" class="lead-submit">Ver Checklist</button>
+    </form>
   </div>
   <div class="lead-right">
     <h3>Ferramentas Gratuitas</h3>
@@ -321,35 +331,41 @@ footer{background:#3B413C;color:#E1E0DC;}
 </div>
 
 <script>
-function calcINSS2026(sal){var inss=0,ant=0;var fx=[[1518,0.075],[2793.88,0.09],[4190.83,0.12],[8157.41,0.14]];for(var i=0;i<fx.length;i++){if(sal<=ant)break;inss+=(Math.min(sal,fx[i][0])-ant)*fx[i][1];ant=fx[i][0];if(sal<=fx[i][0])break;}return inss;}
+function calcINSS2026(sal){var inss=0,ant=0;var fx=[[1621,0.075],[2902.84,0.09],[4354.27,0.12],[8475.55,0.14]];for(var i=0;i<fx.length;i++){if(sal<=ant)break;inss+=(Math.min(sal,fx[i][0])-ant)*fx[i][1];ant=fx[i][0];if(sal<=fx[i][0])break;}return Math.min(inss,988.09);}
 function calcCS(){
   var b=parseFloat(document.getElementById("cs-val").value);
   if(!b||b<=0)return;
-  var inss=calcINSS2026(b);
-  var base=b-inss, irrf=0;
+  var inss=calcINSS2026(b),base=b-inss,irrf=0;
   if(base>4664.68)irrf=base*0.275-896;
   else if(base>3751.05)irrf=base*0.225-662.77;
   else if(base>2826.65)irrf=base*0.15-381.44;
   else if(base>2259.20)irrf=base*0.075-169.44;
   irrf=Math.max(0,irrf);
   if(b<=5000){irrf=0;}else if(b<=7350){irrf=irrf*((b-5000)/2350);}
-  var liq=b-inss-irrf;
   var f=function(v){return"R$ "+v.toFixed(2).replace(".",",");};
   document.getElementById("cs-inss").textContent=f(inss);
   document.getElementById("cs-irrf").textContent=f(irrf);
-  document.getElementById("cs-liq").textContent=f(liq);
+  document.getElementById("cs-liq").textContent=f(b-inss-irrf);
   document.getElementById("cs-result").classList.add("show");
 }
-
-function submitLead(btn){
-  const emailEl=document.getElementById("lead-email");
-  const e=emailEl.value.trim();
-  if(!e||!e.includes("@")){
-    emailEl.style.borderColor="#D81159";
-    emailEl.placeholder="Digite um e-mail válido...";
-    return;
-  }
-  // Sucesso — mostra confirmação inline, não re</script>
+function handleLead(e, form){
+  e.preventDefault();
+  var emailEl=document.getElementById("lead-email");
+  var email=emailEl.value.trim();
+  if(!email||!email.includes("@")){emailEl.style.borderColor="#D81159";return;}
+  // Envia para Netlify Forms
+  fetch("/",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},
+    body:new URLSearchParams(new FormData(form)).toString()})
+  .then(function(){
+    form.style.display="none";
+    var wrap=form.parentElement;
+    var msg=document.createElement("div");
+    msg.style.cssText="background:#d6d4cf;border:1px solid #c4c2bc;border-left:3px solid #D81159;padding:16px 20px;font-family:'Courier Prime',monospace;font-size:13px;color:#3B413C;line-height:1.7;";
+    msg.innerHTML='<strong>✔ Recebido!</strong><br>Enviado para <strong>'+email+'</strong>.<br><span style="color:#6a706b;font-size:12px;">Verifique sua caixa de spam se não receber.</span><br><br><a href="checklist.html" style="font-family:Roboto Mono,monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#D81159;text-decoration:none;">→ Ver checklist agora</a>';
+    wrap.appendChild(msg);
+  }).catch(function(){window.location.href="checklist.html";});
+}
+</script>
 <footer>
   <div class="footer-rule"></div>
   <div class="footer-top">

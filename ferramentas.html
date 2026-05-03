@@ -82,7 +82,15 @@ footer{background:#3B413C;color:#E1E0DC;}
 .tool-card{background:#E1E0DC;border:1px solid #c4c2bc;border-top:3px solid #D81159;padding:32px;}
 .tool-card h3{font-family:'Arvo',serif;font-size:22px;font-weight:700;color:#3B413C;margin-bottom:8px;}
 .tool-card>p{font-family:'Courier Prime',monospace;font-size:13px;color:#6a706b;line-height:1.7;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid #c4c2bc;}
-</style></head>
+</style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-F3WQ90ZGY3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-F3WQ90ZGY3');
+</script></head>
 <body><div class="topbar"><span>Códice Blog — Inteligência para Empresários</span>
   <div style="display:flex;align-items:center;"><span class="topbar-date" style="margin-right:10px;">Recife, 02 de Maio de 2026</span>
     <a href="fiscal.html">Fiscal</a><a href="dp.html">Depto. Pessoal</a>
@@ -203,14 +211,14 @@ function fmt(v){return "R$ "+v.toFixed(2).replace(".",",").replace(/\B(?=(\d{3})
 
 function calcINSS2026(sal){
   var inss=0,ant=0;
-  var fx=[[1518,0.075],[2793.88,0.09],[4190.83,0.12],[8157.41,0.14]];
+  var fx=[[1621,0.075],[2902.84,0.09],[4354.27,0.12],[8475.55,0.14]];
   for(var i=0;i<fx.length;i++){
     if(sal<=ant)break;
     inss+=(Math.min(sal,fx[i][0])-ant)*fx[i][1];
     ant=fx[i][0];
     if(sal<=fx[i][0])break;
   }
-  return inss;
+  return Math.min(inss,988.09);
 }
 
 function calcIRRF2026(salBruto){
@@ -222,8 +230,8 @@ function calcIRRF2026(salBruto){
   else if(base>2826.65) irrf=base*0.15-381.44;
   else if(base>2259.20) irrf=base*0.075-169.44;
   irrf=Math.max(0,irrf);
-  if(salBruto<=5000){ irrf=0; }
-  else if(salBruto<=7350){ irrf=irrf*((salBruto-5000)/2350); }
+  if(salBruto<=5000){irrf=0;}
+  else if(salBruto<=7350){irrf=irrf*((salBruto-5000)/2350);}
   return {inss:inss,irrf:irrf,liq:salBruto-inss-irrf};
 }
 
@@ -236,7 +244,7 @@ function calcPL(){
   document.getElementById("pl-liq").textContent=fmt(r.liq);
   var obs=document.getElementById("pl-obs");
   if(b<=5000) obs.textContent="✔ Isento de IRPF — Lei nº 15.270/2025";
-  else if(b<=7350) obs.textContent="⚡ Redução parcial de IRPF — renda entre R$ 5.000 e R$ 7.350";
+  else if(b<=7350) obs.textContent="⚡ Redução parcial de IRPF (renda entre R$ 5.000 e R$ 7.350)";
   else obs.textContent="Tabela progressiva completa aplicada.";
   document.getElementById("pl-result").classList.add("show");
 }
@@ -244,15 +252,14 @@ function calcPL(){
 function calcRegime(){
   var fat=parseFloat(document.getElementById("reg-fat").value);
   var tipo=document.getElementById("reg-tipo").value;
-  if(!fat||!tipo) return;
-  var sn_rate=fat<=180000?0.060:fat<=360000?0.112:fat<=720000?0.135:fat<=1800000?0.160:0.210;
-  var lp_rate=tipo==="servicos"?0.1633:tipo==="comercio"?0.0873:0.112;
-  var sn_imp=fat*sn_rate, lp_imp=fat*lp_rate;
-  var winner=sn_imp<lp_imp?"Simples Nacional":"Lucro Presumido";
-  document.getElementById("reg-sn").textContent=fmt(sn_imp)+" ("+(sn_rate*100).toFixed(1)+"%)";
-  document.getElementById("reg-lp").textContent=fmt(lp_imp)+" ("+(lp_rate*100).toFixed(1)+"%)";
-  document.getElementById("reg-diff").textContent="Economia com "+winner+": "+fmt(Math.abs(sn_imp-lp_imp))+"/ano";
-  document.getElementById("reg-winner").textContent="✔ "+winner+" é mais vantajoso";
+  if(!fat||!tipo)return;
+  var sn=fat<=180000?0.06:fat<=360000?0.112:fat<=720000?0.135:fat<=1800000?0.16:0.21;
+  var lp=tipo==="servicos"?0.1633:tipo==="comercio"?0.0873:0.112;
+  var si=fat*sn,li=fat*lp,w=si<li?"Simples Nacional":"Lucro Presumido";
+  document.getElementById("reg-sn").textContent=fmt(si)+" ("+(sn*100).toFixed(1)+"%)";
+  document.getElementById("reg-lp").textContent=fmt(li)+" ("+(lp*100).toFixed(1)+"%)";
+  document.getElementById("reg-diff").textContent="Economia com "+w+": "+fmt(Math.abs(si-li))+"/ano";
+  document.getElementById("reg-winner").textContent="✔ "+w+" é mais vantajoso";
   document.getElementById("reg-result").classList.add("show");
 }
 
@@ -261,8 +268,7 @@ function calcFerias(){
   var dias=parseInt(document.getElementById("fer-dias").value)||30;
   var abono=document.getElementById("fer-abono").checked;
   if(!sal||sal<=0){document.getElementById("fer-sal").style.borderColor="#D81159";return;}
-  var ferias=(sal/30)*dias, terco=ferias/3, abono_val=abono?(sal/30)*10:0;
-  var total=ferias+terco+abono_val;
+  var total=(sal/30)*dias+(sal/30)*dias/3+(abono?(sal/30)*10:0);
   var r=calcIRRF2026(total);
   document.getElementById("fer-bruto").textContent=fmt(total);
   document.getElementById("fer-inss").textContent=fmt(r.inss);
@@ -275,7 +281,7 @@ function calc13(){
   var sal=parseFloat(document.getElementById("trz-sal").value);
   var meses=parseInt(document.getElementById("trz-meses").value)||12;
   if(!sal||sal<=0){document.getElementById("trz-sal").style.borderColor="#D81159";return;}
-  var prop=(sal/12)*meses, primeira=prop/2;
+  var prop=(sal/12)*meses,primeira=prop/2;
   var r=calcIRRF2026(prop);
   document.getElementById("trz-prop").textContent=fmt(prop);
   document.getElementById("trz-primeira").textContent=fmt(primeira)+" (sem desconto)";
